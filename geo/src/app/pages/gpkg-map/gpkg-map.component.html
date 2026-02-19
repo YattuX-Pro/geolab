@@ -1,0 +1,120 @@
+<div class="h-full flex overflow-hidden pt-16">
+  <!-- Sidebar -->
+  <div class="w-80 bg-card shadow-lg flex flex-col z-10 border-r border-border">
+    <!-- Header -->
+    <div class="p-4 border-b border-border">
+      <button
+        (click)="goBack()"
+        class="flex items-center text-muted-foreground hover:text-foreground mb-3"
+      >
+        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour à la liste
+      </button>
+      
+      @if (fileDetail) {
+        <h2 class="text-lg font-semibold text-foreground truncate">{{ fileDetail.fileName }}</h2>
+        <p class="text-sm text-muted-foreground">{{ formatDate(fileDetail.uploadDate) }}</p>
+        @if (fileDetail.description) {
+          <p class="text-sm text-muted-foreground mt-2">{{ fileDetail.description }}</p>
+        }
+      }
+    </div>
+
+    <!-- Layers -->
+    <div class="flex-1 overflow-y-auto p-4">
+      <h3 class="text-sm font-medium text-foreground mb-3">Couches</h3>
+      
+      @if (isLoading) {
+        <div class="flex justify-center py-8">
+          <svg class="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+        </div>
+      }
+
+      @for (layer of layerStates; track layer.id) {
+        <div class="bg-muted rounded-lg p-3 mb-2">
+          <label class="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              [checked]="layer.visible"
+              (change)="toggleLayer(layer)"
+              class="w-4 h-4 text-primary rounded focus:ring-ring"
+            >
+            <span 
+              class="w-3 h-3 rounded-full ml-2"
+              [style.backgroundColor]="layer.color"
+            ></span>
+            <span class="ml-2 text-sm font-medium text-foreground flex-1">{{ layer.layerName }}</span>
+          </label>
+          <div class="mt-1 ml-6 flex gap-2 text-xs text-muted-foreground">
+            <span class="bg-background px-2 py-0.5 rounded border border-border">{{ layer.geometryType }}</span>
+            <span>{{ layer.featureCount }} features</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Stats -->
+    @if (fileDetail) {
+      <div class="p-4 border-t border-border bg-muted">
+        <div class="grid grid-cols-2 gap-4 text-center mb-3">
+          <div>
+            <div class="text-2xl font-bold text-primary">{{ loadedCount }}</div>
+            <div class="text-xs text-muted-foreground">Affichées</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ totalCount }}</div>
+            <div class="text-xs text-muted-foreground">Total</div>
+          </div>
+        </div>
+        @if (totalCount > loadedCount) {
+          <p class="text-xs text-center text-muted-foreground">
+            Zoomez pour voir plus de détails
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Map -->
+  <div class="flex-1 relative">
+    <div id="gpkg-map" class="absolute inset-0"></div>
+    
+    <!-- Feature popup panel -->
+    @if (selectedFeature) {
+      <div class="absolute top-4 right-4 w-80 rounded-lg shadow-xl z-[1000] max-h-96 overflow-hidden border border-border"
+           style="background-color: hsl(var(--card));">
+        <div class="p-4 border-b border-border flex justify-between items-center"
+             style="background-color: hsl(var(--muted));">
+          <h4 class="font-medium text-foreground">Propriétés</h4>
+          <button
+            (click)="closeFeaturePanel()"
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto max-h-72" style="background-color: hsl(var(--card));">
+          <div class="space-y-3">
+            @for (prop of getFeatureProperties(); track prop.key) {
+              <div class="flex flex-col gap-0.5">
+                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{{ prop.key }}</span>
+                <span class="text-sm text-foreground break-all pl-2 py-1 rounded" 
+                      style="background-color: hsl(var(--muted));">{{ prop.value }}</span>
+              </div>
+            }
+            @if (getFeatureProperties().length === 0) {
+              <p class="text-sm text-muted-foreground text-center py-4">Aucune propriété</p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

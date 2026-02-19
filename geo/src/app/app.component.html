@@ -1,0 +1,13 @@
+<div class="h-screen overflow-hidden flex flex-col">
+  <app-top-nav (search)="onSearch($event)">
+    <div class="flex items-center gap-4">
+      <app-theme-toggle></app-theme-toggle>
+    </div>
+  </app-top-nav>
+
+  <div class="flex-1 mt-16">
+    <router-outlet></router-outlet>
+  </div>
+  
+  <hlm-toaster />
+</div>

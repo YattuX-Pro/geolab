@@ -1,0 +1,144 @@
+<div class="relative w-full h-full">
+  <div id="map" class="w-full h-full"></div>
+  
+  @if (showDrawForm) {
+    <div class="absolute top-4 right-4 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-[1000] max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Nouveau Terrain</h3>
+        <button (click)="cancelDraw()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          ✕
+        </button>
+      </div>
+      <form (ngSubmit)="saveTerrain()" class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titre *</label>
+          <input [(ngModel)]="newTerrain.titre" name="titre" required
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+          <textarea [(ngModel)]="newTerrain.description" name="description" rows="2"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quartier *</label>
+            <input [(ngModel)]="newTerrain.quartier" name="quartier" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Commune *</label>
+            <input [(ngModel)]="newTerrain.commune" name="commune" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Surface (m²)</label>
+          <input [(ngModel)]="newTerrain.surface" name="surface" type="number" readonly
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 dark:bg-gray-600 dark:border-gray-600 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix (GNF) *</label>
+          <input [(ngModel)]="newTerrain.prix" name="prix" type="number" required (ngModelChange)="onPrixChange()"
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix/m² (GNF)</label>
+          <input [(ngModel)]="newTerrain.prixParM2" name="prixParM2" type="number" readonly
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 dark:bg-gray-600 dark:border-gray-600 dark:text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Statut</label>
+            <select [(ngModel)]="newTerrain.statut" name="statut"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              <option value="Disponible">Disponible</option>
+              <option value="Réservé">Réservé</option>
+              <option value="Vendu">Vendu</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+            <select [(ngModel)]="newTerrain.typeTerrain" name="typeTerrain"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              <option value="Résidentiel">Résidentiel</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Agricole">Agricole</option>
+              <option value="Mixte">Mixte</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Nom</label>
+          <input [(ngModel)]="newTerrain.contactNom" name="contactNom"
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Téléphone</label>
+          <input [(ngModel)]="newTerrain.contactTelephone" name="contactTelephone"
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" [disabled]="isSaving" 
+                  class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            @if (isSaving) {
+              <hlm-spinner class="size-4" />
+            }
+            <span>{{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}</span>
+          </button>
+          <button type="button" (click)="cancelDraw()" [disabled]="isSaving"
+                  class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (selectedTerrain) {
+    <div class="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-[1000]">
+      <div class="flex justify-between items-start mb-2">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ selectedTerrain.properties.titre }}</h3>
+        <button (click)="closeSidebar()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          ✕
+        </button>
+      </div>
+      <div class="space-y-2 text-sm">
+        <p class="text-gray-600 dark:text-gray-300">{{ selectedTerrain.properties.description }}</p>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Quartier:</span>
+            <span class="ml-1 text-gray-900 dark:text-white">{{ selectedTerrain.properties.quartier }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Commune:</span>
+            <span class="ml-1 text-gray-900 dark:text-white">{{ selectedTerrain.properties.commune }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Surface:</span>
+            <span class="ml-1 text-gray-900 dark:text-white">{{ selectedTerrain.properties.surface }} m²</span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Prix:</span>
+            <span class="ml-1 text-gray-900 dark:text-white">{{ formatPrice(selectedTerrain.properties.prix) }} GNF</span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Prix/m²:</span>
+            <span class="ml-1 text-gray-900 dark:text-white">{{ formatPrice(selectedTerrain.properties.prixParM2) }} GNF</span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Statut:</span>
+            <span class="ml-1 px-2 py-0.5 rounded text-xs" 
+                  [class]="selectedTerrain.properties.statut === 'Disponible' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
+              {{ selectedTerrain.properties.statut }}
+            </span>
+          </div>
+        </div>
+        <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <p class="text-gray-500 dark:text-gray-400">Contact: {{ selectedTerrain.properties.contactNom }}</p>
+          <p class="text-gray-900 dark:text-white font-medium">{{ selectedTerrain.properties.contactTelephone }}</p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

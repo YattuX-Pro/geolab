@@ -1,0 +1,179 @@
+<div class="h-full flex relative">
+  <!-- Panneau de contrôle des couches -->
+  <div 
+    class="absolute top-4 left-4 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg transition-all duration-300"
+    [class.w-80]="showLayerPanel"
+    [class.w-12]="!showLayerPanel"
+  >
+    <!-- Header du panneau -->
+    <div class="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+      @if (showLayerPanel) {
+        <h3 class="font-semibold text-gray-900 dark:text-white">Couches Topographiques</h3>
+      }
+      <button 
+        (click)="toggleLayerPanel()"
+        class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+        [title]="showLayerPanel ? 'Réduire' : 'Afficher les couches'"
+      >
+        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          @if (showLayerPanel) {
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+          } @else {
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          }
+        </svg>
+      </button>
+    </div>
+
+    @if (showLayerPanel) {
+      <!-- Configuration GeoServer -->
+      <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+        <div class="space-y-2">
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">URL GeoServer</label>
+            <input 
+              type="text" 
+              [(ngModel)]="geoserverUrl"
+              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Workspace</label>
+            <input 
+              type="text" 
+              [(ngModel)]="workspace"
+              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <button 
+            (click)="updateGeoserverConfig()"
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="w-full"
+          >
+            Actualiser
+          </button>
+        </div>
+      </div>
+
+      <!-- Message d'erreur -->
+      @if (errorMessage) {
+        <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800">
+          <p class="text-xs text-yellow-700 dark:text-yellow-400">{{ errorMessage }}</p>
+        </div>
+      }
+
+      <!-- Liste des couches -->
+      <div class="p-3 max-h-64 overflow-y-auto">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-gray-600 dark:text-gray-400">
+            {{ getVisibleLayersCount() }}/{{ availableLayers.length }} couches actives
+          </span>
+          <div class="flex gap-1">
+            <button 
+              (click)="toggleAllLayers(true)"
+              class="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+            >
+              Tout
+            </button>
+            <button 
+              (click)="toggleAllLayers(false)"
+              class="text-xs px-2 py-1 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            >
+              Aucun
+            </button>
+          </div>
+        </div>
+
+        @if (availableLayers.length === 0) {
+          <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+            Aucune couche disponible
+          </p>
+        } @else {
+          <div class="space-y-1">
+            @for (layer of availableLayers; track layer.name) {
+              <div 
+                class="flex items-center gap-2 p-2 rounded cursor-pointer transition-colors"
+                [class.bg-blue-50]="selectedLayer === layer"
+                [class.dark:bg-blue-900/30]="selectedLayer === layer"
+                [class.hover:bg-gray-50]="selectedLayer !== layer"
+                [class.dark:hover:bg-gray-700]="selectedLayer !== layer"
+                (click)="selectLayer(layer)"
+              >
+                <input 
+                  type="checkbox" 
+                  [checked]="layer.visible"
+                  (change)="toggleLayer(layer); $event.stopPropagation()"
+                  (click)="$event.stopPropagation()"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">{{ layer.title }}</span>
+                <button 
+                  (click)="zoomToLayer(layer); $event.stopPropagation()"
+                  class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                  [class.opacity-50]="!layer.bbox"
+                  title="Zoomer sur cette couche"
+                >
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                  </svg>
+                </button>
+                @if (layer.visible) {
+                  <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="p-3 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+        <button 
+          (click)="zoomToExtent()"
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="flex-1"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+          </svg>
+          Zoom
+        </button>
+        <button 
+          (click)="refreshLayers()"
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="flex-1"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Rafraîchir
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Indicateur de chargement -->
+  @if (isLoading) {
+    <div class="absolute top-4 right-4 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 flex items-center gap-2">
+      <hlm-spinner class="size-4" />
+      <span class="text-sm text-gray-600 dark:text-gray-400">Chargement...</span>
+    </div>
+  }
+
+  <!-- Carte OpenLayers -->
+  <div id="topography-map" class="flex-1 h-full"></div>
+
+  <!-- Légende / Info -->
+  <div class="absolute bottom-4 right-4 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3">
+    <div class="text-xs text-gray-500 dark:text-gray-400">
+      <p class="font-semibold mb-1">OpenLayers + GeoServer WMS</p>
+      <p>Données topographiques</p>
+    </div>
+  </div>
+</div>
